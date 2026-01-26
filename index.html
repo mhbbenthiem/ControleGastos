@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gastos Diários</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#111111" />
+
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin: 0; background: #f6f6f6; color: #111; }
+    header { position: sticky; top: 0; background: #111; color: #fff; padding: 14px 16px; }
+    header h1 { margin: 0; font-size: 18px; }
+    main { max-width: 920px; margin: 0 auto; padding: 14px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab { border: 0; padding: 10px 12px; border-radius: 10px; background: #fff; cursor: pointer; }
+    .tab.active { background: #111; color: #fff; }
+    .card { background: #fff; border-radius: 14px; padding: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.06); margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    label:not(.btn) { display:block; font-size: 12px; color: #333; margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: #fff; }
+    textarea { min-height: 42px; resize: vertical; }
+    .row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+    .btn { border: 0; padding: 10px 12px; border-radius: 10px; background: #111; color: #fff; cursor: pointer; }
+    .btn.secondary { background: #e9e9e9; color: #111; }
+    .btn.danger { background: #b00020; }
+    .muted { color: #666; font-size: 13px; }
+    .list { display: grid; gap: 8px; }
+    .item { display:flex; justify-content: space-between; gap: 12px; padding: 10px; border-radius: 12px; background: #fafafa; border: 1px solid #eee; }
+    .item strong { display:block; }
+    .item small { display:block; color:#666; }
+    .item .actions { display:flex; gap: 8px; align-items:center; }
+    .kpi { display:flex; gap: 10px; flex-wrap: wrap; }
+    .pill { background:#fafafa; border:1px solid #eee; padding:8px 10px; border-radius: 999px; }
+    dialog { border:0; border-radius: 14px; max-width: 720px; width: calc(100% - 24px); }
+    dialog::backdrop { background: rgba(0,0,0,.35); }
+    .dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top: 12px; }
+    .table { width:100%; border-collapse: collapse; }
+    .table th, .table td { text-align:left; padding: 10px; border-bottom: 1px solid #eee; }
+    .right { text-align:right; }
+    .hidden { display:none; }
+
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Gastos Diários</h1>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button class="tab active" id="tabLancamentos">Lançamentos</button>
+      <button class="tab" id="tabRelatorios">Relatório mensal</button>
+    </div>
+
+    <!-- Lançamentos -->
+    <section id="viewLancamentos">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div class="muted">Hoje</div>
+            <div id="todayLabel" style="font-size:18px; font-weight:700;"></div>
+          </div>
+          <div class="kpi">
+            <div class="pill"><span class="muted">Total hoje:</span> <strong id="totalHoje">R$ 0,00</strong></div>
+            <div class="pill"><span class="muted">Itens hoje:</span> <strong id="countHoje">0</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 10px 0; font-size:16px;">Novo gasto</h2>
+        <div class="grid">
+          <div>
+            <label>Data</label>
+            <input type="date" id="fData" />
+          </div>
+          <div>
+            <label>Valor (R$)</label>
+            <input type="text" inputmode="decimal" placeholder="ex: 25,90" id="fValor" />
+          </div>
+          <div>
+            <label>Loja</label>
+            <input type="text" placeholder="ex: Mercado X" id="fLoja" />
+          </div>
+          <div>
+            <label>Item (produto)</label>
+            <input type="text" placeholder="ex: Arroz 5kg" id="fItem" />
+          </div>
+          <div>
+            <label>Categoria (opcional)</label>
+            <input type="text" placeholder="ex: Alimentação" id="fCategoria" />
+          </div>
+          <div>
+            <label>Observação (opcional)</label>
+            <input type="text" placeholder="ex: promoção" id="fObs" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" id="btnAdd">Adicionar</button>
+          <button class="btn secondary" id="btnLimpar">Limpar</button>
+          <span class="muted" id="msgForm"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <h2 style="margin:0; font-size:16px;">Lançamentos</h2>
+            <div class="muted">Toque em “Editar” para alterar.</div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Filtrar por data</label>
+              <input type="date" id="filterDate" />
+            </div>
+            <button class="btn secondary" id="btnHoje">Hoje</button>
+          </div>
+        </div>
+
+        <div class="list" id="listLancamentos" style="margin-top:12px;"></div>
+        <div class="muted" id="emptyLancamentos" style="margin-top:8px;" class="hidden"></div>
+      </div>
+    </section>
+
+    <!-- Relatórios -->
+    <section id="viewRelatorios" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <h2 style="margin:0; font-size:16px;">Relatório mensal</h2>
+            <div class="muted">“Onde foi mais barato” por item (menor preço do mês por loja).</div>
+          </div>
+          <div>
+            <label>Mês</label>
+            <input type="month" id="monthPicker" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi">
+          <div class="pill"><span class="muted">Total no mês:</span> <strong id="totalMes">R$ 0,00</strong></div>
+          <div class="pill"><span class="muted">Lançamentos:</span> <strong id="countMes">0</strong></div>
+          <div class="pill"><span class="muted">Itens únicos:</span> <strong id="uniqueItens">0</strong></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:15px;">Mais barato por item</h3>
+        <div style="overflow:auto;">
+          <table class="table" id="tableCheapest">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Loja</th>
+                <th class="right">Menor preço</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="muted" id="emptyReport" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:15px;">Total por categoria</h3>
+        <div style="overflow:auto;">
+          <table class="table" id="tableCat">
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th class="right">Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="muted" id="emptyCat" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:15px;">
+          Backup de dados
+        </h3>
+
+        <div class="row">
+          <button class="btn secondary" id="btnExport">
+            Exportar BD (JSON)
+          </button>
+
+          <label class="btn secondary"
+                 style="display:inline-flex; align-items:center; gap:10px; cursor:pointer;">
+            Importar BD (JSON)
+            <input id="fileImport"
+                   type="file"
+                   accept="application/json"
+                   style="display:none;" />
+          </label>
+        </div>
+
+        <div class="muted" id="backupMsg" style="margin-top:10px;"></div>
+      </div>
+
+    </section>
+
+    <!-- Modal editar -->
+    <dialog id="dlgEdit">
+      <form method="dialog" class="card" style="box-shadow:none; margin:0;">
+        <h2 style="margin:0 0 10px 0; font-size:16px;">Editar gasto</h2>
+
+        <input type="hidden" id="eId" />
+        <div class="grid">
+          <div>
+            <label>Data</label>
+            <input type="date" id="eData" />
+          </div>
+          <div>
+            <label>Valor (R$)</label>
+            <input type="text" inputmode="decimal" id="eValor" />
+          </div>
+          <div>
+            <label>Loja</label>
+            <input type="text" id="eLoja" />
+          </div>
+          <div>
+            <label>Item</label>
+            <input type="text" id="eItem" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <input type="text" id="eCategoria" />
+          </div>
+          <div>
+            <label>Obs</label>
+            <input type="text" id="eObs" />
+          </div>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="btn secondary" value="cancel">Cancelar</button>
+          <button class="btn danger" id="btnDelete" type="button">Excluir</button>
+          <button class="btn" id="btnSave" type="button">Salvar</button>
+        </div>
+        <div class="muted" id="msgEdit" style="margin-top:10px;"></div>
+      </form>
+    </dialog>
+  </main>
+
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    // registra service worker (PWA/offline)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+    }
+  </script>
+</body>
+</html>

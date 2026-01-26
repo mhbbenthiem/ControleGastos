@@ -1,0 +1,12 @@
+{
+  "name": "Gastos Diários",
+  "short_name": "Gastos",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f6f6",
+  "theme_color": "#111111",
+  "icons": [
+    { "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAFklEQVR4nO3BMQEAAADCoPVPbQ0PoAAAAAAAAAB4GQxVAAE8fZ3uAAAAAElFTkSuQmCC", "sizes": "192x192", "type": "image/png" },
+    { "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAFklEQVR4nO3BMQEAAADCoPVPbQ0PoAAAAAAAAAB4GQxVAAE8fZ3uAAAAAElFTkSuQmCC", "sizes": "512x512", "type": "image/png" }
+  ]
+}
