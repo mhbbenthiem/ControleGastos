@@ -6,49 +6,394 @@
   <title>Gastos Diários</title>
 
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#111111" />
+  <meta name="theme-color" content="#6366f1" />
 
   <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    body { margin: 0; background: #f6f6f6; color: #111; }
-    header { position: sticky; top: 0; background: #111; color: #fff; padding: 14px 16px; }
-    header h1 { margin: 0; font-size: 18px; }
-    main { max-width: 920px; margin: 0 auto; padding: 14px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab { border: 0; padding: 10px 12px; border-radius: 10px; background: #fff; cursor: pointer; }
-    .tab.active { background: #111; color: #fff; }
-    .card { background: #fff; border-radius: 14px; padding: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.06); margin-bottom: 12px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
-    label:not(.btn) { display:block; font-size: 12px; color: #333; margin-bottom: 4px; }
-    input, select, textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: #fff; }
-    textarea { min-height: 42px; resize: vertical; }
-    .row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
-    .btn { border: 0; padding: 10px 12px; border-radius: 10px; background: #111; color: #fff; cursor: pointer; }
-    .btn.secondary { background: #e9e9e9; color: #111; }
-    .btn.danger { background: #b00020; }
-    .muted { color: #666; font-size: 13px; }
-    .list { display: grid; gap: 8px; }
-    .item { display:flex; justify-content: space-between; gap: 12px; padding: 10px; border-radius: 12px; background: #fafafa; border: 1px solid #eee; }
-    .item strong { display:block; }
-    .item small { display:block; color:#666; }
-    .item .actions { display:flex; gap: 8px; align-items:center; }
-    .kpi { display:flex; gap: 10px; flex-wrap: wrap; }
-    .pill { background:#fafafa; border:1px solid #eee; padding:8px 10px; border-radius: 999px; }
-    dialog { border:0; border-radius: 14px; max-width: 720px; width: calc(100% - 24px); }
-    dialog::backdrop { background: rgba(0,0,0,.35); }
-    .dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top: 12px; }
-    .table { width:100%; border-collapse: collapse; }
-    .table th, .table td { text-align:left; padding: 10px; border-bottom: 1px solid #eee; }
-    .right { text-align:right; }
-    .hidden { display:none; }
-
+    :root { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --secondary: #f3f4f6;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text: #1f2937;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
+      --bg: #f9fafb;
+      --white: #ffffff;
+      --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      margin: 0; 
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    
+    header { 
+      position: sticky; 
+      top: 0; 
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: var(--white);
+      padding: 20px 16px;
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+    }
+    
+    header h1 { 
+      margin: 0; 
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    main { 
+      max-width: 920px; 
+      margin: 0 auto; 
+      padding: 24px 16px;
+    }
+    
+    .tabs { 
+      display: flex; 
+      gap: 8px; 
+      margin-bottom: 24px;
+      background: var(--white);
+      padding: 6px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .tab { 
+      flex: 1;
+      border: 0; 
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-light);
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+    
+    .tab:hover {
+      background: var(--secondary);
+      color: var(--text);
+    }
+    
+    .tab.active { 
+      background: var(--primary);
+      color: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .card { 
+      background: var(--white);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      transition: box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+      box-shadow: var(--shadow-md);
+    }
+    
+    .grid { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    @media (max-width: 720px) { 
+      .grid { 
+        grid-template-columns: 1fr;
+      }
+      
+      main {
+        padding: 16px 12px;
+      }
+      
+      .card {
+        padding: 16px;
+      }
+    }
+    
+    label:not(.btn) { 
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    
+    input, select, textarea { 
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      font-size: 15px;
+      transition: all 0.2s ease;
+      color: var(--text);
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    input:disabled {
+      background: var(--secondary);
+      color: var(--text-light);
+      cursor: not-allowed;
+    }
+    
+    textarea { 
+      min-height: 42px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .row { 
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+    
+    .btn { 
+      border: 0;
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: var(--white);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn.secondary { 
+      background: var(--secondary);
+      color: var(--text);
+      box-shadow: none;
+    }
+    
+    .btn.secondary:hover {
+      background: #e5e7eb;
+    }
+    
+    .btn.danger { 
+      background: var(--danger);
+    }
+    
+    .btn.danger:hover {
+      background: #dc2626;
+    }
+    
+    .muted { 
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    
+    .list { 
+      display: grid;
+      gap: 10px;
+    }
+    
+    .item { 
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    
+    .item:hover {
+      border-color: var(--primary-light);
+      background: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .item strong { 
+      display: block;
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .item small { 
+      display: block;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+    
+    .item .actions { 
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .kpi { 
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .pill { 
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    
+    .pill strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    dialog { 
+      border: 0;
+      border-radius: 16px;
+      max-width: 720px;
+      width: calc(100% - 24px);
+      box-shadow: var(--shadow-lg);
+      padding: 0;
+    }
+    
+    dialog::backdrop { 
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    .dialog-actions { 
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .table { 
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .table th, .table td { 
+      text-align: left;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .table th {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--text);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+      transition: background 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+      background: var(--bg);
+    }
+    
+    .right { 
+      text-align: right;
+    }
+    
+    .hidden { 
+      display: none;
+    }
+    
+    h2, h3 {
+      color: var(--text);
+      font-weight: 700;
+    }
+    
+    /* Animações sutis */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .card {
+      animation: slideIn 0.3s ease;
+    }
+    
+    /* Melhorias para inputs de data */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="month"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      filter: opacity(0.6);
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator:hover,
+    input[type="month"]::-webkit-calendar-picker-indicator:hover {
+      filter: opacity(1);
+    }
+    
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-light);
+    }
   </style>
 </head>
 
 <body>
   <header>
-    <h1>Gastos Diários</h1>
+    <h1>Controle de Gastos</h1>
   </header>
 
   <main>
@@ -65,7 +410,7 @@
         <div class="row" style="justify-content:space-between;">
           <div>
             <div class="muted">Hoje</div>
-            <div id="todayLabel" style="font-size:18px; font-weight:700;"></div>
+            <div id="todayLabel" style="font-size:20px; font-weight:700;"></div>
           </div>
           <div class="kpi">
             <div class="pill"><span class="muted">Total hoje:</span> <strong id="totalHoje">R$ 0,00</strong></div>
@@ -75,7 +420,7 @@
       </div>
 
       <div class="card">
-        <h2 style="margin:0 0 10px 0; font-size:16px;">Novo gasto</h2>
+        <h2 style="margin:0 0 16px 0; font-size:18px;">Novo gasto</h2>
         <div class="grid">
           <div>
             <label>Data</label>
@@ -133,7 +478,7 @@
             <input type="text" placeholder="ex: promoção" id="fObs" />
           </div>
         </div>
-        <div class="row" style="margin-top:10px;">
+        <div class="row" style="margin-top:16px;">
           <button class="btn" id="btnAdd">Adicionar</button>
           <button class="btn secondary" id="btnLimpar">Limpar</button>
           <span class="muted" id="msgForm"></span>
@@ -143,8 +488,8 @@
       <div class="card">
         <div class="row" style="justify-content:space-between;">
           <div>
-            <h2 style="margin:0; font-size:16px;">Lançamentos</h2>
-            <div class="muted">Toque em “Editar” para alterar.</div>
+            <h2 style="margin:0; font-size:18px;">Lançamentos</h2>
+            <div class="muted">Toque em "Editar" para alterar.</div>
           </div>
           <div class="row">
             <div>
@@ -155,7 +500,7 @@
           </div>
         </div>
 
-        <div class="list" id="listLancamentos" style="margin-top:12px;"></div>
+        <div class="list" id="listLancamentos" style="margin-top:16px;"></div>
         <div class="muted" id="emptyLancamentos" style="margin-top:8px;" class="hidden"></div>
       </div>
     </section>
@@ -165,8 +510,8 @@
       <div class="card">
         <div class="row" style="justify-content:space-between;">
           <div>
-            <h2 style="margin:0; font-size:16px;">Relatório mensal</h2>
-            <div class="muted">“Onde foi mais barato” por item (menor preço do mês por loja).</div>
+            <h2 style="margin:0; font-size:18px;">Relatório mensal</h2>
+            <div class="muted">"Onde foi mais barato" por item (menor preço do mês por loja).</div>
           </div>
           <div>
             <label>Mês</label>
@@ -184,7 +529,7 @@
       </div>
 
       <div class="card">
-        <h3 style="margin:0 0 10px 0; font-size:15px;">Mais barato por item</h3>
+        <h3 style="margin:0 0 12px 0; font-size:16px;">Mais barato por item</h3>
         <div style="overflow:auto;">
           <table class="table" id="tableCheapest">
             <thead>
@@ -201,7 +546,7 @@
       </div>
 
       <div class="card">
-        <h3 style="margin:0 0 10px 0; font-size:15px;">Total por categoria</h3>
+        <h3 style="margin:0 0 12px 0; font-size:16px;">Total por categoria</h3>
         <div style="overflow:auto;">
           <table class="table" id="tableCat">
             <thead>
@@ -216,13 +561,13 @@
         <div class="muted" id="emptyCat" style="margin-top:8px;"></div>
       </div>
       <div class="card">
-        <h3 style="margin:0 0 10px 0; font-size:15px;">Resumo por categoria (mês)</h3>
+        <h3 style="margin:0 0 12px 0; font-size:16px;">Resumo por categoria (mês)</h3>
         <div id="catSections"></div>
         <div class="muted" id="emptyCatSections" style="margin-top:8px;"></div>
       </div>
 
       <div class="card">
-        <h3 style="margin:0 0 10px 0; font-size:15px;">
+        <h3 style="margin:0 0 12px 0; font-size:16px;">
           Backup de dados
         </h3>
 
@@ -249,7 +594,7 @@
     <div class="card">
         <div class="row" style="justify-content:space-between;">
         <div>
-            <h2 style="margin:0; font-size:16px;">Gastos por categoria</h2>
+            <h2 style="margin:0; font-size:18px;">Gastos por categoria</h2>
             <div class="muted">Veja os lançamentos filtrados por categoria no mês selecionado.</div>
         </div>
         <div>
@@ -273,7 +618,7 @@
     </div>
 
     <div class="card">
-        <h3 style="margin:0 0 10px 0; font-size:15px;">Lançamentos da categoria</h3>
+        <h3 style="margin:0 0 12px 0; font-size:16px;">Lançamentos da categoria</h3>
         <div class="list" id="catList"></div>
         <div class="muted" id="catListEmpty" style="margin-top:8px;"></div>
     </div>
@@ -282,7 +627,7 @@
     <!-- Modal editar -->
     <dialog id="dlgEdit">
       <form method="dialog" class="card" style="box-shadow:none; margin:0;">
-        <h2 style="margin:0 0 10px 0; font-size:16px;">Editar gasto</h2>
+        <h2 style="margin:0 0 16px 0; font-size:18px;">Editar gasto</h2>
 
         <input type="hidden" id="eId" />
         <div class="grid">
