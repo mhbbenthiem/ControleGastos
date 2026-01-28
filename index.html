@@ -53,9 +53,11 @@
 
   <main>
     <div class="tabs">
-      <button class="tab active" id="tabLancamentos">Lançamentos</button>
-      <button class="tab" id="tabRelatorios">Relatório mensal</button>
+        <button class="tab active" id="tabLancamentos">Lançamentos</button>
+        <button class="tab" id="tabRelatorios">Relatório mensal</button>
+        <button class="tab" id="tabCategorias">Por categoria</button>
     </div>
+
 
     <!-- Lançamentos -->
     <section id="viewLancamentos">
@@ -80,21 +82,52 @@
             <input type="date" id="fData" />
           </div>
           <div>
-            <label>Valor (R$)</label>
-            <input type="text" inputmode="decimal" placeholder="ex: 25,90" id="fValor" />
-          </div>
-          <div>
             <label>Loja</label>
             <input type="text" placeholder="ex: Mercado X" id="fLoja" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <select id="fCategoria">
+                <option value="Mercado">Mercado</option>
+                <option value="Restaurante/Bar/iFood">Restaurante/Bar/iFood</option>
+                <option value="Farmácia">Farmácia</option>
+                <option value="Roupas">Roupas</option>
+                <option value="Beleza">Beleza</option>
+                <option value="Passagem">Passagem</option>
+                <option value="Outros">Outros</option>
+            </select>
           </div>
           <div>
             <label>Item (produto)</label>
             <input type="text" placeholder="ex: Arroz 5kg" id="fItem" />
           </div>
           <div>
-            <label>Categoria (opcional)</label>
-            <input type="text" placeholder="ex: Alimentação" id="fCategoria" />
+            <label>Valor (R$)</label>
+            <input type="text" inputmode="decimal" placeholder="ex: 25,90" id="fValor" />
           </div>
+
+                    <div>
+            <label>Quantidade</label>
+            <input type="text" inputmode="decimal" placeholder="ex: 2" id="fQtd" />
+        </div>
+
+        <div>
+        <label>Unidade</label>
+        <select id="fUnit">
+            <option value="un">Unidade (un)</option>
+            <option value="kg">Quilo (kg)</option>
+            <option value="g">Gramas (g)</option>
+            <option value="l">Litro (L)</option>
+            <option value="ml">Mililitro (mL)</option>
+        </select>
+        </div>
+
+        <div>
+        <label>Preço por unidade</label>
+        <input type="text" id="fUnitPrice" disabled placeholder="calculado automaticamente" />
+        </div>
+
+
           <div>
             <label>Observação (opcional)</label>
             <input type="text" placeholder="ex: promoção" id="fObs" />
@@ -183,6 +216,12 @@
         <div class="muted" id="emptyCat" style="margin-top:8px;"></div>
       </div>
       <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:15px;">Resumo por categoria (mês)</h3>
+        <div id="catSections"></div>
+        <div class="muted" id="emptyCatSections" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
         <h3 style="margin:0 0 10px 0; font-size:15px;">
           Backup de dados
         </h3>
@@ -206,6 +245,39 @@
       </div>
 
     </section>
+    <section id="viewCategorias" class="hidden">
+    <div class="card">
+        <div class="row" style="justify-content:space-between;">
+        <div>
+            <h2 style="margin:0; font-size:16px;">Gastos por categoria</h2>
+            <div class="muted">Veja os lançamentos filtrados por categoria no mês selecionado.</div>
+        </div>
+        <div>
+            <label>Mês</label>
+            <input type="month" id="catMonthPicker" />
+        </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="row" style="justify-content:space-between;">
+        <div class="pill"><span class="muted">Total no mês:</span> <strong id="catTotalMes">R$ 0,00</strong></div>
+        <div class="pill"><span class="muted">Categoria:</span> <strong id="catAtual">—</strong></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <label>Selecione a categoria</label>
+        <select id="catSelect"></select>
+        <div class="muted" id="catEmpty" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:15px;">Lançamentos da categoria</h3>
+        <div class="list" id="catList"></div>
+        <div class="muted" id="catListEmpty" style="margin-top:8px;"></div>
+    </div>
+    </section>
 
     <!-- Modal editar -->
     <dialog id="dlgEdit">
@@ -219,21 +291,53 @@
             <input type="date" id="eData" />
           </div>
           <div>
-            <label>Valor (R$)</label>
-            <input type="text" inputmode="decimal" id="eValor" />
+            <label>Categoria</label>
+            <select id="eCategoria">
+                <option value="Mercado">Mercado</option>
+                <option value="Restaurante/Bar/iFood">Restaurante/Bar/iFood</option>
+                <option value="Farmácia">Farmácia</option>
+                <option value="Roupas">Roupas</option>
+                <option value="Beleza">Beleza</option>
+                <option value="Passagem">Passagem</option>
+                <option value="Outros">Outros</option>
+            </select>
           </div>
           <div>
             <label>Loja</label>
             <input type="text" id="eLoja" />
           </div>
+            <div>
+            <label>Quantidade</label>
+            <input type="text" inputmode="decimal" id="eQtd" />
+            </div>
+
+            <div>
+            <label>Unidade</label>
+            <select id="eUnit">
+                <option value="un">Unidade (un)</option>
+                <option value="kg">Quilo (kg)</option>
+                <option value="g">Gramas (g)</option>
+                <option value="l">Litro (L)</option>
+                <option value="ml">Mililitro (mL)</option>
+            </select>
+            </div>
+
+            <div>
+            <label>Preço por unidade</label>
+            <input type="text" id="eUnitPrice" disabled />
+        </div>
+
+          <div>
+            <label>Valor (R$)</label>
+            <input type="text" inputmode="decimal" id="eValor" />
+          </div>
+
           <div>
             <label>Item</label>
             <input type="text" id="eItem" />
           </div>
-          <div>
-            <label>Categoria</label>
-            <input type="text" id="eCategoria" />
-          </div>
+
+
           <div>
             <label>Obs</label>
             <input type="text" id="eObs" />
