@@ -1,6 +1,7 @@
 const DB_NAME = "gastos_pwa";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "expenses";
+const STORES = "stores";
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -13,6 +14,13 @@ function openDB() {
         store.createIndex("by_date", "date"); // YYYY-MM-DD
         store.createIndex("by_month", "month"); // YYYY-MM
       }
+
+
+
+if (!db.objectStoreNames.contains(STORES)) {
+  // key = nome da loja (evita duplicados)
+  db.createObjectStore(STORES, { keyPath: "name" });
+}
     };
 
     req.onsuccess = () => resolve(req.result);
@@ -113,3 +121,30 @@ async function bulkPutExpenses(expenses) {
   });
 }
 
+async function addStore(name) {
+  const clean = String(name || "").trim();
+  if (!clean) return false;
+
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const store = db.transaction(STORES, "readwrite").objectStore(STORES);
+    // put para ser idempotente (sobrescreve se já existir)
+    const req = store.put({ name: clean, createdAt: Date.now() });
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getAllStores() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const store = db.transaction(STORES, "readonly").objectStore(STORES);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const list = (req.result || []).map(x => x.name).filter(Boolean);
+      list.sort((a,b) => a.localeCompare(b, "pt-BR"));
+      resolve(list);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}

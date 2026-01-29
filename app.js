@@ -144,11 +144,11 @@ async function refreshLancamentos() {
   renderLancamentos(list);
 }
 
-function openEdit(e) {
+async function openEdit(e) {
   $("eId").value = e.id;
   $("eData").value = e.date;
   $("eValor").value = String(e.value).replace(".", ",");
-  $("eLoja").value = e.store;
+  setSelectValueOrAdd($("eLoja"), e.store);
   $("eItem").value = e.item;
   $("eCategoria").value = e.category || "Outros";
   $("eObs").value = e.obs || "";
@@ -432,6 +432,104 @@ function escapeHtml(str) {
   }[m]));
 }
 
+
+
+// ---- Lojas cadastradas (offline) ----
+const DEFAULT_STORES = [
+  "Atacadão",
+  "Droga Raia",
+  "Drogasil",
+  "Oxxo",
+  "Sonda"
+];
+
+function setSelectValueOrAdd(selectEl, value) {
+  const v = String(value || "").trim();
+  if (!v) return;
+  const has = [...selectEl.options].some(o => o.value === v);
+  if (!has) {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    selectEl.appendChild(opt);
+  }
+  selectEl.value = v;
+}
+
+async function ensureDefaultStores() {
+  const existing = await getAllStores();
+  if (existing.length) return;
+
+  for (const s of DEFAULT_STORES) {
+    await addStore(s);
+  }
+}
+
+async function ensureStoresFromExpenses() {
+  const all = await getAllExpenses();
+  const uniq = new Set();
+  for (const e of all) {
+    const s = String(e.store || "").trim();
+    if (s) uniq.add(s);
+  }
+  for (const s of uniq) {
+    await addStore(s);
+  }
+}
+
+async function refreshStoresUI() {
+  const stores = await getAllStores();
+
+  const fSel = $("fLoja");
+  const eSel = $("eLoja");
+
+  const curF = fSel.value;
+  const curE = eSel.value;
+
+  // preenche select do formulário
+  fSel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "Selecione uma loja…";
+  fSel.appendChild(opt0);
+
+  for (const s of stores) {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    fSel.appendChild(opt);
+  }
+
+  // preenche select do editar
+  eSel.innerHTML = "";
+  const optE0 = document.createElement("option");
+  optE0.value = "";
+  optE0.textContent = "Selecione uma loja…";
+  eSel.appendChild(optE0);
+
+  for (const s of stores) {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    eSel.appendChild(opt);
+  }
+
+  // restaura seleção (se existir)
+  if (curF) setSelectValueOrAdd(fSel, curF);
+  if (curE) setSelectValueOrAdd(eSel, curE);
+}
+
+async function promptAddStore(targetSelectId) {
+  const name = prompt("Nome da loja:");
+  const clean = String(name || "").trim();
+  if (!clean) return;
+
+  await addStore(clean);
+  await refreshStoresUI();
+
+  const sel = $(targetSelectId);
+  setSelectValueOrAdd(sel, clean);
+}
 function initDefaults() {
   const t = todayISO();
   $("todayLabel").textContent = formatDateBR(t);
@@ -455,6 +553,9 @@ function wireUI() {
 
   $("btnAdd").onclick = addFromForm;
   $("btnLimpar").onclick = clearForm;
+
+  $("btnAddStoreF").onclick = () => promptAddStore("fLoja");
+  $("btnAddStoreE").onclick = () => promptAddStore("eLoja");
 
   $("btnHoje").onclick = async () => {
     const t = todayISO();
@@ -675,6 +776,9 @@ async function importBDFromFile(file) {
 (async function boot() {
   initDefaults();
   wireUI();
+  await ensureDefaultStores();
+  await ensureStoresFromExpenses();
+  await refreshStoresUI();
   await refreshLancamentos();
   await refreshReport();
 })();
