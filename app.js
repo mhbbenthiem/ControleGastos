@@ -62,6 +62,126 @@ function refreshUnitPricePreview(prefix) {
     : "";
 }
 
+// ===== Telegram notify (Render backend) =====
+const BACKEND_URL = "https://controlegastos-85uv.onrender.com";
+// IMPORTANTE: coloque a MESMA APP_KEY que você cadastrou no Render (Environment Variables)
+const APP_KEY = "COLE_SUA_APP_KEY_AQUI";
+
+function toCents(valueBRL) {
+  // valueBRL em reais (ex: 12.34) => centavos (1234)
+  return Math.round((Number(valueBRL) || 0) * 100);
+}
+
+function mondayOfWeekISO(dateStr) {
+  // dateStr: YYYY-MM-DD
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  const day = dt.getDay(); // 0=domingo .. 1=segunda
+  const diffToMonday = (day === 0 ? -6 : 1 - day);
+  dt.setDate(dt.getDate() + diffToMonday);
+  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+}
+
+function loadNotifySettings() {
+  return {
+    user_key: localStorage.getItem("notify_user_key") || ($("userKey")?.value || "maria"),
+    weekly_cap_cents: Number(localStorage.getItem("weekly_cap_cents") || 0),
+    alert_pct: Number(localStorage.getItem("alert_pct") || 80),
+  };
+}
+
+function saveNotifySettingsLocal(user_key, weekly_cap_cents, alert_pct) {
+  localStorage.setItem("notify_user_key", user_key);
+  localStorage.setItem("weekly_cap_cents", String(weekly_cap_cents));
+  localStorage.setItem("alert_pct", String(alert_pct));
+}
+
+function lastAlertKey(user_key) {
+  return `last_alert_week_${user_key}`;
+}
+
+async function apiPost(path, body) {
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-APP-KEY": APP_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function saveSettingsToServer() {
+  const user_key = ($("userKey").value || "").trim();
+  const weeklyCapBRL = parseMoneyBR($("weeklyCap").value);
+  const alert_pct = Number($("alertPct").value || 80);
+
+  if (!user_key) { $("settingsMsg").textContent = "Preencha o user_key (ex: maria)."; return; }
+  if (!Number.isFinite(weeklyCapBRL) || weeklyCapBRL <= 0) {
+    $("settingsMsg").textContent = "Preencha o teto semanal (ex: 600,00).";
+    return;
+  }
+
+  const weekly_cap_cents = toCents(Number(weeklyCapBRL.toFixed(2)));
+  const pct = Number.isFinite(alert_pct) ? Math.max(1, Math.min(100, Math.trunc(alert_pct))) : 80;
+
+  // salva local (funciona offline)
+  saveNotifySettingsLocal(user_key, weekly_cap_cents, pct);
+
+  // salva no servidor (para manter configuração do usuário lá)
+  $("settingsMsg").textContent = "Salvando…";
+  await apiPost("/api/settings", { user_key, weekly_cap_cents, alert_pct: pct });
+  $("settingsMsg").textContent = "Configurações salvas ✅";
+}
+
+async function maybeNotifyForWeek(dateStr) {
+  // roda quando o usuário registra/edita/exclui e o site está aberto
+  const { user_key, weekly_cap_cents, alert_pct } = loadNotifySettings();
+  if (!user_key || !weekly_cap_cents) return;
+
+  const week_start = mondayOfWeekISO(dateStr);
+  const last = localStorage.getItem(lastAlertKey(user_key));
+  if (last === week_start) return; // anti-spam no front
+
+  // soma gastos da semana (seg a dom) usando a base local (IndexedDB)
+  const all = await getAllExpenses();
+  const totalWeek = all.reduce((acc, e) => {
+    if (!e?.date) return acc;
+    const ws = week_start;
+    // como formato é YYYY-MM-DD, comparação lexicográfica funciona
+    const weEnd = (() => {
+      const [y, m, d] = ws.split("-").map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + 6);
+      return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+    })();
+
+    if (e.date >= ws && e.date <= weEnd) {
+      return acc + toCents(e.value);
+    }
+    return acc;
+  }, 0);
+
+  const pct = Math.floor((totalWeek * 100) / Math.max(weekly_cap_cents, 1));
+
+  if (pct < alert_pct) return;
+
+  // chama backend (ele tem um anti-spam também: last_alert_week por usuário)
+  await apiPost("/api/notify", {
+    user_key,
+    week_start,
+    pct,
+    total_cents: totalWeek,
+    cap_cents: weekly_cap_cents,
+  });
+
+  localStorage.setItem(lastAlertKey(user_key), week_start);
+}
 
 function setMsg(el, text) {
   el.textContent = text || "";
@@ -245,9 +365,10 @@ async function addFromForm() {
 
     createdAt: Date.now(),
 };
-
   
   await addExpense(expense);
+  await maybeNotifyForWeek(date);
+
   setMsg($("msgForm"), "Salvo!");
   setTimeout(() => setMsg($("msgForm"), ""), 900);
 
@@ -537,6 +658,13 @@ function initDefaults() {
   $("filterDate").value = t;
   $("monthPicker").value = t.slice(0,7);
   $("catMonthPicker").value = t.slice(0,7);
+  function hydrateNotifyCard() {
+  if (!$("userKey")) return; // caso o card não exista
+  const s = loadNotifySettings();
+  $("userKey").value = s.user_key || "maria";
+  if (s.weekly_cap_cents) $("weeklyCap").value = String((s.weekly_cap_cents / 100).toFixed(2)).replace(".", ",");
+  $("alertPct").value = String(s.alert_pct || 80);
+}
 }
 
 function formatDateBR(dateStr) {
@@ -588,7 +716,7 @@ function wireUI() {
     $(id).addEventListener("input", () => refreshUnitPricePreview("f"));
     $(id).addEventListener("change", () => refreshUnitPricePreview("f"));
   });
-
+  $("btnSaveSettings").onclick = saveSettingsToServer;
 
 
 }

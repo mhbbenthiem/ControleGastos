@@ -412,6 +412,38 @@
             <div class="muted">Hoje</div>
             <div id="todayLabel" style="font-size:20px; font-weight:700;"></div>
           </div>
+          <div class="card" id="cardNotify">
+            <h2 style="margin:0 0 12px 0; font-size:18px;">Notificações (Telegram)</h2>
+
+            <div class="grid">
+              <div>
+                <label>Identificador do usuário (user_key)</label>
+                <input type="text" id="userKey" value="maria" />
+                <div class="muted" style="margin-top:6px;">
+                  No Telegram, envie: <strong>/link maria</strong> para vincular.
+                </div>
+              </div>
+
+              <div>
+                <label>Teto semanal (R$)</label>
+                <input type="text" id="weeklyCap" inputmode="decimal" placeholder="ex: 600,00" />
+                <div class="muted" style="margin-top:6px;">
+                  Quando seus gastos na semana passarem do % abaixo, eu aviso.
+                </div>
+              </div>
+
+              <div>
+                <label>Alertar ao atingir (%)</label>
+                <input type="number" id="alertPct" min="1" max="100" value="80" />
+                <div class="muted" style="margin-top:6px;">Ex: 80 = avisa ao bater 80% do teto.</div>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:12px; gap:10px;">
+              <button class="btn" type="button" id="btnSaveSettings">Salvar configurações</button>
+              <div class="muted" id="settingsMsg"></div>
+            </div>
+          </div>
           <div class="kpi">
             <div class="pill"><span class="muted">Total hoje:</span> <strong id="totalHoje">R$ 0,00</strong></div>
             <div class="pill"><span class="muted">Itens hoje:</span> <strong id="countHoje">0</strong></div>
